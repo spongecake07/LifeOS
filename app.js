@@ -62,57 +62,59 @@ function render(){
   }
 }
 
-// ── Dashboard ───────────────────────────────────────────────
+// ── Dashboard (daily briefing only) ─────────────────────────
 function vDashboard(){
   const today=toDay();
   const open=db.tasks.filter(t=>!t.completed);
   const todayT=open.filter(t=>t.dueDate===today);
   const over=open.filter(t=>t.dueDate&&t.dueDate<today);
-  const upcoming=open.filter(t=>t.dueDate&&t.dueDate>today).sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,4);
+  const upcoming=open.filter(t=>t.dueDate&&t.dueDate>today).sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,6);
+  const noDate=open.filter(t=>!t.dueDate);
+  const allClear=over.length===0&&todayT.length===0&&upcoming.length===0;
 
   return`
   <div class="hero">
     <div class="hero-top">
-      <div><div class="hero-title">Dashboard</div><div class="hero-date">${fmtDate(today)}</div></div>
+      <div><div class="hero-title">Today</div><div class="hero-date">${fmtDate(today)}</div></div>
       <div class="hero-actions"><button class="hero-btn primary" onclick="openAddTask(null)">+ Task</button></div>
     </div>
     <div class="hero-stats">
-      <div class="hstat"><div class="hstat-n">${open.length}</div><div class="hstat-l">Open</div></div>
-      <div class="hstat"><div class="hstat-n" style="color:${todayT.length>0?'#FFE8A0':'white'}">${todayT.length}</div><div class="hstat-l">Today</div></div>
       <div class="hstat"><div class="hstat-n" style="color:${over.length>0?'#FFBFB0':'white'}">${over.length}</div><div class="hstat-l">Overdue</div></div>
-      <div class="hstat"><div class="hstat-n">${db.tasks.filter(t=>t.completed).length}</div><div class="hstat-l">Done</div></div>
+      <div class="hstat"><div class="hstat-n" style="color:${todayT.length>0?'#FFE8A0':'white'}">${todayT.length}</div><div class="hstat-l">Due Today</div></div>
+      <div class="hstat"><div class="hstat-n">${upcoming.length}</div><div class="hstat-l">Upcoming</div></div>
+      <div class="hstat"><div class="hstat-n">${open.length}</div><div class="hstat-l">Total Open</div></div>
     </div>
   </div>
 
   <div class="body">
-    ${over.length>0?`<div class="section-label" style="color:var(--danger)">Overdue</div><div class="task-list" style="margin-bottom:24px">${over.map(t=>taskCard(t)).join('')}</div>`:''}
+    ${over.length>0?`
+      <div class="section-label" style="color:var(--danger)">Overdue</div>
+      <div class="task-list" style="margin-bottom:24px">${over.map(t=>taskCard(t)).join('')}</div>
+    `:''}
 
-    ${todayT.length>0?`<div class="section-label">Due Today</div><div class="task-list" style="margin-bottom:24px">${todayT.map(t=>taskCard(t)).join('')}</div>`:''}
+    ${todayT.length>0?`
+      <div class="section-label">Due Today</div>
+      <div class="task-list" style="margin-bottom:24px">${todayT.map(t=>taskCard(t)).join('')}</div>
+    `:''}
 
-    <div class="section-label">Projects</div>
-    <div class="proj-cards">
-      ${Object.entries(db.projects).map(([k,p],i)=>{
-        const ot=db.tasks.filter(t=>t.project===k&&!t.completed).length;
-        const cost=projCost(k);
-        const done=db.tasks.filter(t=>t.project===k&&t.completed).length;
-        return`<div class="proj-card ${PROJ_GRADS[i%5]}" onclick="nav('project','${k}')">
-          <div class="pc-dots">•••</div>
-          <div class="pc-icon">${p.emoji||'◈'}</div>
-          <div class="pc-body">
-            <div class="pc-name">${p.name}</div>
-            <div class="pc-sub">${ot} open task${ot!==1?'s':''}</div>
-            <div class="pc-stats">
-              <div class="pc-stat"><div class="v">${ot}</div><div class="l">tasks</div></div>
-              <div class="pc-stat"><div class="v">${cost>0?'$'+cost.toFixed(0):'—'}</div><div class="l">cost</div></div>
-              <div class="pc-stat"><div class="v">${done}</div><div class="l">done</div></div>
-            </div>
-          </div>
-          <div class="pc-rank"><div class="pc-rank-n">${i+1}</div><div class="pc-rank-l">Area</div></div>
-        </div>`
-      }).join('')}
-    </div>
+    ${upcoming.length>0?`
+      <div class="section-label">Upcoming</div>
+      <div class="task-list" style="margin-bottom:24px">${upcoming.map(t=>taskCard(t)).join('')}</div>
+    `:''}
 
-    ${upcoming.length>0?`<div class="section-label">Upcoming</div><div class="task-list">${upcoming.map(t=>taskCard(t)).join('')}</div>`:''}
+    ${allClear?`
+      <div class="empty" style="padding:60px 20px">
+        <div style="font-size:32px;margin-bottom:12px">&#10003;</div>
+        <p style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px">All clear</p>
+        <p style="margin-bottom:20px">No tasks due today or overdue.</p>
+        <button class="btn btn-p" onclick="nav('projects')">View Projects</button>
+      </div>
+    `:''}
+
+    ${noDate.length>0?`
+      <div class="section-label">No Due Date</div>
+      <div class="task-list">${noDate.map(t=>taskCard(t)).join('')}</div>
+    `:''}
   </div>`;
 }
 
