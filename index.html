@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+  <title>Life OS</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icons/icon-192.png"/>
+  <meta name="theme-color" content="#2C2416"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="sb-head">
+      <span class="logo-t">Life OS</span>
+      <button id="sbt" class="ib" aria-label="Toggle sidebar">&#9776;</button>
+    </div>
+    <nav id="mnav">
+      <button class="ni active" data-view="dashboard"><span class="ni-icon">⊞</span><span class="nl">Dashboard</span></button>
+      <div class="nsl">Projects</div>
+      <button class="ni" data-view="projects"><span class="ni-icon">◈</span><span class="nl">All Projects</span></button>
+      <button class="ni" data-view="project" data-project="volund"><span class="ni-icon">⚙</span><span class="nl">Völund Watches</span></button>
+      <button class="ni" data-view="project" data-project="forex"><span class="ni-icon">↗</span><span class="nl">Forex Trading</span></button>
+      <button class="ni" data-view="project" data-project="photobooth"><span class="ni-icon">◎</span><span class="nl">Photobooth</span></button>
+      <button class="ni" data-view="project" data-project="repairs"><span class="ni-icon">⚒</span><span class="nl">Repairs</span></button>
+      <button class="ni" data-view="project" data-project="family"><span class="ni-icon">⌂</span><span class="nl">Family & Personal</span></button>
+      <div class="nsl">Tools</div>
+      <button class="ni" data-view="tools"><span class="ni-icon">☰</span><span class="nl">Tool Inventory</span></button>
+      <button class="ni" data-view="reminders"><span class="ni-icon">◷</span><span class="nl">Reminders</span></button>
+      <button class="ni" data-view="archive"><span class="ni-icon">✓</span><span class="nl">Completed</span></button>
+      <button class="ni" data-view="export"><span class="ni-icon">↓</span><span class="nl">Export / Backup</span></button>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <div id="vc"></div>
+  </main>
+</div>
+
+<!-- Mobile bottom nav -->
+<div id="bnav">
+  <div class="bn-items">
+    <div class="bn-item active" data-view="dashboard"><div class="bn-icon">⊞</div>Home</div>
+    <div class="bn-item" data-view="projects"><div class="bn-icon">◈</div>Projects</div>
+    <div class="bn-item" data-view="reminders"><div class="bn-icon">◷</div>Reminders</div>
+    <div class="bn-item" data-view="tools"><div class="bn-icon">☰</div>Tools</div>
+    <div class="bn-item" data-view="export"><div class="bn-icon">↓</div>Export</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="mo" class="h"><div id="mb"><div id="mc"></div></div></div>
+<!-- Toast -->
+<div id="toast" class="h"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
