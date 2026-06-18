@@ -1,10 +1,10 @@
 const CACHE = 'lifeos-v3';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/manifest.json',
+  '/LifeOS/',
+  '/LifeOS/index.html',
+  '/LifeOS/style.css',
+  '/LifeOS/app.js',
+  '/LifeOS/manifest.json',
 ];
 
 self.addEventListener('install', e => {
