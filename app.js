@@ -1043,6 +1043,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.bn-item').forEach(b=>b.addEventListener('click',()=>{curRepairCat=null;nav(b.dataset.view,null)}));
   document.getElementById('mo').addEventListener('click',e=>{if(e.target===document.getElementById('mo'))closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/LifeOS/sw.js',{scope:'/LifeOS/'}).catch(()=>{});
+  }
   db.reminders.forEach(schedRem);
   render();
 });
