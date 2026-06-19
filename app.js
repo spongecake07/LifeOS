@@ -939,8 +939,12 @@ function taskForm(task,pk,rc){
   </div>
   <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="tf-notes" placeholder="Additional details...">${esc(task?.notes||'')}</textarea></div>
   <div class="fg"><label class="fl">Photos</label>
+    <input type="file" id="tf-photo-camera" accept="image/*" capture="environment" style="display:none" onchange="handlePhotos(this)"/>
     <input type="file" id="tf-photos" accept="image/*" multiple style="display:none" onchange="handlePhotos(this)"/>
-    <button type="button" class="btn btn-g" onclick="document.getElementById('tf-photos').click()">&#128247; Attach Photos</button>
+    <div style="display:flex;gap:8px">
+      <button type="button" class="btn btn-g" onclick="document.getElementById('tf-photo-camera').click()">&#128247; Take Photo</button>
+      <button type="button" class="btn btn-g" onclick="document.getElementById('tf-photos').click()">&#128194; From Gallery</button>
+    </div>
     <div class="photo-grid" id="photo-prev">${(task?.photos||[]).map(p=>`<div class="photo-wrap"><img class="photo-thumb" src="${p}" data-src="${p}"/><button type="button" class="photo-remove" onclick="this.parentElement.remove()">&#10005;</button></div>`).join('')}</div>
     <div id="photo-upload-status" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
   </div>`
