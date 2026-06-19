@@ -1,7 +1,15 @@
 const KEY='lifeos_v1';
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function loadDB(){try{return JSON.parse(localStorage.getItem(KEY))||defaultDB()}catch{return defaultDB()}}
-function saveDB(d){localStorage.setItem(KEY,JSON.stringify(d))}
+function saveDB(d){
+  try{
+    localStorage.setItem(KEY,JSON.stringify(d));
+    return true;
+  }catch(e){
+    toast('Storage full — try removing a photo or two');
+    return false;
+  }
+}
 function defaultDB(){return{
   projects:{
     volund:{name:'Völund Watches',notes:'',emoji:'⚙'},
@@ -933,7 +941,8 @@ function taskForm(task,pk,rc){
   <div class="fg"><label class="fl">Photos</label>
     <input type="file" id="tf-photos" accept="image/*" multiple style="display:none" onchange="handlePhotos(this)"/>
     <button type="button" class="btn btn-g" onclick="document.getElementById('tf-photos').click()">&#128247; Attach Photos</button>
-    <div class="photo-grid" id="photo-prev">${(task?.photos||[]).map(p=>`<img class="photo-thumb" src="${p}" data-src="${p}"/>`).join('')}</div>
+    <div class="photo-grid" id="photo-prev">${(task?.photos||[]).map(p=>`<div class="photo-wrap"><img class="photo-thumb" src="${p}" data-src="${p}"/><button type="button" class="photo-remove" onclick="this.parentElement.remove()">&#10005;</button></div>`).join('')}</div>
+    <div id="photo-upload-status" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
   </div>`
 }
 
@@ -950,7 +959,39 @@ function onRemCh(p){
   else if(t==='custom')ex.innerHTML=`<input type="number" class="fi" id="${p}-remint" min="1" value="7" placeholder="Every X days"/>`;
   else ex.innerHTML='';
 }
-function handlePhotos(inp){Array.from(inp.files).forEach(f=>{const r=new FileReader();r.onload=e=>{const p=document.getElementById('photo-prev');const img=document.createElement('img');img.className='photo-thumb';img.src=e.target.result;img.dataset.src=e.target.result;p.appendChild(img)};r.readAsDataURL(f)})}
+function handlePhotos(inp){
+  const status=document.getElementById('photo-upload-status');
+  Array.from(inp.files).forEach(f=>{
+    if(status)status.textContent='Processing image...';
+    const r=new FileReader();
+    r.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        // Resize to max 800px on longest side to keep storage small
+        const maxDim=800;
+        let w=img.width,h=img.height;
+        if(w>maxDim||h>maxDim){
+          if(w>h){h=Math.round(h*(maxDim/w));w=maxDim}
+          else{w=Math.round(w*(maxDim/h));h=maxDim}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        const resized=canvas.toDataURL('image/jpeg',0.7);
+
+        const p=document.getElementById('photo-prev');
+        const wrap=document.createElement('div');
+        wrap.className='photo-wrap';
+        wrap.innerHTML=`<img class="photo-thumb" src="${resized}" data-src="${resized}"/><button type="button" class="photo-remove" onclick="this.parentElement.remove()">&#10005;</button>`;
+        p.appendChild(wrap);
+        if(status)status.textContent='';
+      };
+      img.src=e.target.result;
+    };
+    r.readAsDataURL(f);
+  });
+  inp.value='';
+}
 function addToolSel(s){if(!s.value)return;addToolTag(s.value);s.value=''}
 function addCustomTool(){const i=document.getElementById('tf-ctool');if(!i.value.trim())return;addToolTag(i.value.trim());i.value=''}
 function addToolTag(name){const c=document.getElementById('sel-tools');const s=document.createElement('span');s.className='tc-tag';s.style.cssText='cursor:pointer;background:var(--surface2)';s.dataset.tool=name;s.innerHTML=`${esc(name)} <span onclick="this.parentElement.remove()">&#10005;</span>`;c.appendChild(s)}
@@ -966,10 +1007,15 @@ function submitTask(editId){
     if(rt==='custom')reminder.intervalDays=document.getElementById('tf-remint')?.value;
   }
   const ex=editId?db.tasks.find(t=>t.id===editId):null;
-  const imgs=Array.from(document.querySelectorAll('#photo-prev img')).map(i=>i.dataset.src||i.src);
+  const imgs=Array.from(document.querySelectorAll('#photo-prev .photo-wrap img')).map(i=>i.dataset.src||i.src);
   const task={id:editId||uid(),title,project:document.getElementById('tf-proj').value,repairCat:(document.getElementById('tf-proj').value==='repairs'?document.getElementById('tf-rc')?.value:null)||null,priority:document.getElementById('tf-pri').value,dueDate:document.getElementById('tf-due').value,cost:document.getElementById('tf-cost').value,tools:getTools(),notes:document.getElementById('tf-notes').value.trim(),photos:imgs,reminder,completed:ex?.completed||false,completedAt:ex?.completedAt||null,createdAt:ex?.createdAt||new Date().toISOString()};
   if(editId){const i=db.tasks.findIndex(t=>t.id===editId);db.tasks[i]=task}else db.tasks.push(task);
-  saveDB(db);closeModal();render();toast(editId?'Task updated':'Task added')
+  const ok=saveDB(db);
+  if(!ok){
+    if(editId){const i=db.tasks.findIndex(t=>t.id===editId);if(i>-1)db.tasks[i]=ex}else db.tasks.pop();
+    return;
+  }
+  closeModal();render();toast(editId?'Task updated':'Task added')
 }
 function toggleTask(id){const t=db.tasks.find(t=>t.id===id);if(!t)return;t.completed=!t.completed;t.completedAt=t.completed?new Date().toISOString():null;saveDB(db);render();toast(t.completed?'Done ✓ — tap Reopen to undo':'Task reopened')}
 function deleteTask(id){if(!confirm('Delete this task?'))return;db.tasks=db.tasks.filter(t=>t.id!==id);saveDB(db);render();toast('Task deleted')}
