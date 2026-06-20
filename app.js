@@ -619,7 +619,10 @@ function renderFamilyIntegration(){
   </div>`;
 }
 
+let filterType=null,filterProject=null;
 function nav(view,project=null){curView=view;curProject=project;activeTab='tasks';render();updateNav()}
+function navFiltered(type){curView='filtered';filterType=type;filterProject=null;render();updateNav()}
+function navFilteredProject(projectKey,type){curView='filtered';filterType=type;filterProject=projectKey;render();updateNav()}
 function updateNav(){
   document.querySelectorAll('.ni').forEach(b=>{b.classList.remove('active');if(b.dataset.view===curView&&(!b.dataset.project||b.dataset.project===curProject))b.classList.add('active')});
   document.querySelectorAll('.bn-item').forEach(b=>{b.classList.remove('active');if(b.dataset.view===curView)b.classList.add('active')});
@@ -631,12 +634,54 @@ function render(){
     case'dashboard': vc.innerHTML=vDashboard();break;
     case'projects':  vc.innerHTML=vProjects();break;
     case'project':   vc.innerHTML=vProject(curProject);break;
+    case'filtered':  vc.innerHTML=vFiltered();break;
     case'tools':     vc.innerHTML=vTools();break;
     case'reminders': vc.innerHTML=vReminders();break;
     case'archive':   vc.innerHTML=vArchive();break;
     case'export':    vc.innerHTML=vExport();break;
     default:         vc.innerHTML=vDashboard();
   }
+}
+
+// ── Filtered task list (drill-down from stat numbers) ────────
+function vFiltered(){
+  const today=toDay();
+  let tasks=[];
+  let title='Tasks';
+  let grad='var(--g1)';
+
+  if(filterProject){
+    const proj=db.projects[filterProject];
+    const base=db.tasks.filter(t=>t.project===filterProject);
+    if(filterType==='open'){tasks=base.filter(t=>!t.completed);title=`${proj.name} — Open`;}
+    else if(filterType==='done'){tasks=base.filter(t=>t.completed).sort((a,b)=>(b.completedAt||'').localeCompare(a.completedAt||''));title=`${proj.name} — Done`;}
+    const idx=Object.keys(db.projects).indexOf(filterProject);
+    grad=`var(--g${(idx%5)+1})`;
+  }else{
+    const open=db.tasks.filter(t=>!t.completed);
+    if(filterType==='overdue'){tasks=open.filter(t=>t.dueDate&&t.dueDate<today);title='Overdue';grad='var(--g2)';}
+    else if(filterType==='today'){tasks=open.filter(t=>t.dueDate===today);title='Due Today';grad='var(--g1)';}
+    else if(filterType==='upcoming'){tasks=open.filter(t=>t.dueDate&&t.dueDate>today).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));title='Upcoming';grad='var(--g3)';}
+    else if(filterType==='open'){tasks=open;title='Total Open';grad='var(--g4)';}
+  }
+
+  const isDoneView=filterType==='done';
+
+  return`
+  <div class="hero" style="background:${grad}">
+    <div class="hero-top">
+      <div>
+        <div class="hero-title">${title}</div>
+        <div class="hero-date">${tasks.length} task${tasks.length!==1?'s':''}</div>
+      </div>
+      <button class="hero-btn" onclick="nav(${filterProject?`'project','${filterProject}'`:`'dashboard'`})">&#8592; Back</button>
+    </div>
+  </div>
+  <div class="body">
+    ${tasks.length>0
+      ?(isDoneView?`<div class="task-list">${tasks.map(t=>taskCard(t)).join('')}</div>`:renderPriGroups(tasks))
+      :`<div class="empty"><p>Nothing here.</p></div>`}
+  </div>`;
 }
 
 // ── Dashboard — daily briefing ───────────────────────────────
@@ -658,10 +703,10 @@ function vDashboard(){
       <div class="hero-actions"><button class="hero-btn primary" onclick="openAddTask(null)">+ Task</button></div>
     </div>
     <div class="hero-stats">
-      <div class="hstat"><div class="hstat-n" style="color:${over.length>0?'#FFBFB0':'white'}">${over.length}</div><div class="hstat-l">Overdue</div></div>
-      <div class="hstat"><div class="hstat-n" style="color:${todayT.length>0?'#FFE8A0':'white'}">${todayT.length}</div><div class="hstat-l">Due Today</div></div>
-      <div class="hstat"><div class="hstat-n">${upcoming.length}</div><div class="hstat-l">Upcoming</div></div>
-      <div class="hstat"><div class="hstat-n">${open.length}</div><div class="hstat-l">Total Open</div></div>
+      <div class="hstat clickable" onclick="navFiltered('overdue')"><div class="hstat-n" style="color:${over.length>0?'#FFBFB0':'white'}">${over.length}</div><div class="hstat-l">Overdue</div></div>
+      <div class="hstat clickable" onclick="navFiltered('today')"><div class="hstat-n" style="color:${todayT.length>0?'#FFE8A0':'white'}">${todayT.length}</div><div class="hstat-l">Due Today</div></div>
+      <div class="hstat clickable" onclick="navFiltered('upcoming')"><div class="hstat-n">${upcoming.length}</div><div class="hstat-l">Upcoming</div></div>
+      <div class="hstat clickable" onclick="navFiltered('open')"><div class="hstat-n">${open.length}</div><div class="hstat-l">Total Open</div></div>
     </div>
   </div>
   <div class="body">
@@ -713,9 +758,9 @@ function vProjects(){
             <div class="pc-name">${p.name}</div>
             <div class="pc-sub">${ot} open task${ot!==1?'s':''}</div>
             <div class="pc-stats">
-              <div class="pc-stat"><div class="v">${ot}</div><div class="l">tasks</div></div>
+              <div class="pc-stat clickable" onclick="event.stopPropagation();navFilteredProject('${k}','open')"><div class="v">${ot}</div><div class="l">tasks</div></div>
               <div class="pc-stat"><div class="v">${cost>0?'$'+cost.toFixed(0):'—'}</div><div class="l">cost</div></div>
-              <div class="pc-stat"><div class="v">${done}</div><div class="l">done</div></div>
+              <div class="pc-stat clickable" onclick="event.stopPropagation();navFilteredProject('${k}','done')"><div class="v">${done}</div><div class="l">done</div></div>
             </div>
           </div>
           <div class="pc-rank"><div class="pc-rank-n">${i+1}</div><div class="pc-rank-l">Area</div></div>
@@ -749,8 +794,8 @@ function vProject(key){
       </div>
     </div>
     <div class="hero-stats">
-      <div class="hstat"><div class="hstat-n">${open.length}</div><div class="hstat-l">Open</div></div>
-      <div class="hstat"><div class="hstat-n">${done.length}</div><div class="hstat-l">Done</div></div>
+      <div class="hstat clickable" onclick="navFilteredProject('${key}','open')"><div class="hstat-n">${open.length}</div><div class="hstat-l">Open</div></div>
+      <div class="hstat clickable" onclick="navFilteredProject('${key}','done')"><div class="hstat-n">${done.length}</div><div class="hstat-l">Done</div></div>
       <div class="hstat"><div class="hstat-n">${allCost>0?'$'+allCost.toFixed(0):'—'}</div><div class="hstat-l">Cost</div></div>
     </div>
   </div>

@@ -60,6 +60,8 @@ a{color:var(--accent);text-decoration:none}
 .hstat+.hstat{border-left:1px solid rgba(255,255,255,.2)}
 .hstat-n{font-size:24px;font-weight:700;color:white;font-variant-numeric:tabular-nums;line-height:1}
 .hstat-l{font-size:11px;color:rgba(255,255,255,.6);margin-top:3px}
+.hstat.clickable{cursor:pointer;border-radius:var(--r);transition:background var(--tr);padding:6px 8px;margin:-6px -8px}
+.hstat.clickable:hover{background:rgba(255,255,255,.1)}
 
 /* ── Body ── */
 .body{padding:16px 20px 32px}
@@ -79,6 +81,8 @@ a{color:var(--accent);text-decoration:none}
 .pc-stats{display:flex;gap:16px}
 .pc-stat .v{font-size:13px;font-weight:700;color:white;font-variant-numeric:tabular-nums}
 .pc-stat .l{font-size:10px;color:rgba(255,255,255,.55);margin-top:1px}
+.pc-stat.clickable{cursor:pointer;border-radius:var(--r);padding:4px 6px;margin:-4px -6px;transition:background var(--tr)}
+.pc-stat.clickable:hover{background:rgba(255,255,255,.15)}
 .pc-rank{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
 .pc-rank-n{font-size:22px;font-weight:800;color:rgba(255,255,255,.85);line-height:1}
 .pc-rank-l{font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
