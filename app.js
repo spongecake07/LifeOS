@@ -868,13 +868,18 @@ function fmtRem(r){const p=[];if(r.type==='once')p.push(`Once — ${fmtDate(r.da
 // ── Archive — completed tasks by date ─────────────────────────
 function vArchive(){
   const done=db.tasks.filter(t=>t.completed).sort((a,b)=>(b.completedAt||'').localeCompare(a.completedAt||''));
-  // Group by completion date
-  const groups={};
+
+  // Group by project first, in project order; tasks with no project go last under "Other"
+  const projectOrder=Object.keys(db.projects);
+  const byProject={};
   done.forEach(t=>{
-    const d=t.completedAt?t.completedAt.slice(0,10):'Unknown';
-    if(!groups[d])groups[d]=[];
-    groups[d].push(t);
+    const key=t.project&&db.projects[t.project]?t.project:'_other';
+    if(!byProject[key])byProject[key]=[];
+    byProject[key].push(t);
   });
+
+  const orderedKeys=[...projectOrder.filter(k=>byProject[k]), ...(byProject['_other']?['_other']:[])];
+
   return`
   <div class="hero" style="background:var(--g4)">
     <div class="hero-top">
@@ -883,12 +888,31 @@ function vArchive(){
     </div>
   </div>
   <div class="body">
-    ${done.length>0?Object.entries(groups).map(([date,tasks])=>`
-      <div class="date-group">
-        <div class="date-group-label">${date==='Unknown'?'Unknown date':fmtDateLong(date)}</div>
-        <div class="task-list">${tasks.map(t=>taskCard(t)).join('')}</div>
-      </div>
-    `).join(''):`<div class="empty"><p>No completed tasks yet.</p></div>`}
+    ${done.length>0?orderedKeys.map(key=>{
+      const proj=key==='_other'?null:db.projects[key];
+      const tasks=byProject[key];
+      // Sub-group by completion date within this project, newest first
+      const dateGroups={};
+      tasks.forEach(t=>{
+        const d=t.completedAt?t.completedAt.slice(0,10):'Unknown';
+        if(!dateGroups[d])dateGroups[d]=[];
+        dateGroups[d].push(t);
+      });
+      return`
+        <div class="project-archive-group">
+          <div class="project-archive-header">
+            <span class="project-archive-emoji">${proj?(proj.emoji||'◈'):'•'}</span>
+            <span class="project-archive-name">${proj?proj.name:'No Project'}</span>
+            <span class="project-archive-count">${tasks.length}</span>
+          </div>
+          ${Object.entries(dateGroups).map(([date,dtasks])=>`
+            <div class="date-group">
+              <div class="date-group-label">${date==='Unknown'?'Unknown date':fmtDateLong(date)}</div>
+              <div class="task-list">${dtasks.map(t=>taskCard(t)).join('')}</div>
+            </div>
+          `).join('')}
+        </div>`;
+    }).join(''):`<div class="empty"><p>No completed tasks yet.</p></div>`}
   </div>`
 }
 
