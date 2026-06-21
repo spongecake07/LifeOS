@@ -846,6 +846,10 @@ function taskCard(task){
       ${(task.photos||[]).length>0?`<div class="photo-grid">${task.photos.map(p=>`<img class="photo-thumb" src="${p}" onclick="viewPhoto('${p}')" />`).join('')}</div>`:''}
     </div>
     <div class="tc-actions">
+      ${!task.completed&&task.dueDate!==toDay()
+        ?`<button class="tca today" onclick="moveToToday('${task.id}')" title="Move to today">&#9737;</button>`
+        :''
+      }
       ${task.completed
         ?`<button class="tca reopen" onclick="toggleTask('${task.id}')">Reopen</button>`
         :`<button class="tca" onclick="openEditTask('${task.id}')">&#9998;</button>`
@@ -853,6 +857,12 @@ function taskCard(task){
       <button class="tca del" onclick="deleteTask('${task.id}')">&#10005;</button>
     </div>
   </div>`
+}
+
+function moveToToday(id){
+  const t=db.tasks.find(t=>t.id===id);if(!t)return;
+  t.dueDate=toDay();
+  saveDB(db);render();toast('Moved to today');
 }
 
 // ── Tools ─────────────────────────────────────────────────────
